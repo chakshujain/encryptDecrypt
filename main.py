@@ -1,5 +1,8 @@
 from cryptography.fernet import Fernet
 import os
+from tkinter import filedialog
+from tkinter import *
+import threading
 
 def write_key():
     key = Fernet.generate_key()
@@ -34,8 +37,9 @@ def encryptdirs(dirpath):
                 filepath = os.path.join(root, name)
                 encrypt(filepath,key)
                 print("Encrypted " + filepath)
-        print("Encrypted all successfully")
-        print("Your safe key is " + key.decode('utf-8') + "  Please keep this safe or will not be able to decrypt your files")
+                commentsvar.set("Encrypted " + filepath)
+        commentsvar.set("Encrypted all successfully")
+        commentsvar.set("Your safe key is " + key.decode('utf-8') + "  Please keep this safe or will not be able to decrypt your files")
     except Exception as e:
         print(e)
 
@@ -56,17 +60,67 @@ def decrypt(filename, key):
 def decryptdirs(dirpath):
     try:
         key = load_key()
-        print("key loaded successfully")
+        commentsvar.set("key loaded successfully")
         for root,directories,files in os.walk(dirpath):
             for name in files:
                 filepath = os.path.join(root, name)
                 decrypt(filepath,key)
-                print("Decrypted " + filepath)
-        print("Decrypted all Successfully")
+                commentsvar.set("Decrypted " + filepath)
+        commentsvar.set("Decrypted all Successfully")
     except Exception as e:
         print(e)
 
 dirpath = r'Paste your Directory path here'
 
-encryptdirs(dirpath)
+# encryptdirs(dirpath)
 # decryptdirs(dirpath)
+
+def browse_button():
+    global folder_path
+    path = filedialog.askdirectory()
+    folder_path.set(path)
+    
+    
+def encryptdirsgui():
+    global folder_path
+    strdirpath = folder_path.get()
+    try:
+        # encryptdirs(strdirpath)
+        encryptThread = threading.Thread(target=encryptdirs, args=(strdirpath,))
+        encryptThread.start()
+        # thread.start_new_thread(encryptdirs,(strdirpath))
+    except Exception as e:
+        print(e)
+
+def decryptdirsgui():
+    global folder_path
+    strdirpath = folder_path.get()
+    try:
+        # decryptdirs(strdirpath)
+        decryptThread = threading.Thread(target=decryptdirs, args=(strdirpath,))
+        decryptThread.start()
+    except Exception as e:
+        print(e)
+
+root = Tk()
+root.geometry('700x300') 
+folder_path = StringVar()
+commentsvar = StringVar()
+
+
+browseBtn = Button(text="Browse drive or Folder to Encrypt/Decrypt", command=browse_button)
+browseBtn.grid(row=0, column=10)
+
+pathLabel = Label(master=root,textvariable=folder_path)
+pathLabel.grid(row=2, column=10)
+
+encryptBtn = Button(text="Encrypt", command=encryptdirsgui)
+encryptBtn.grid(row=4, column=10)
+
+decryptBtn = Button(text="Decrypt", command=decryptdirsgui)
+decryptBtn.grid(row=6, column=10)
+
+commentsLabel = Label(master=root,textvariable=commentsvar)
+commentsLabel.grid(row = 8,column =10)
+
+mainloop()
